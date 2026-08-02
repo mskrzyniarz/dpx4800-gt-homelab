@@ -68,8 +68,8 @@ tank [POOL]
 |  |
 |  ├─ resources [DATASET]  # static files used be applications
 |  |  ├─ .gitignore [FILE]  # excluding folders containing sensitive data, ex. certificates
-|  │  ├─ images [DATASET]  # ex. background image for Homepage dashboard
 |  │  ├─ icons [DATASET]  # app icons displayed on the TrueNAS page, icons used on Homepage dashboard, etc.
+|  │  ├─ images [DATASET]  # ex. background image for Homepage dashboard
 |  │  └─ ․․․  # other datasets with static files, ex. fonts, certificates, etc.
 |  |
 |  ├─ system [DATASET]  #  scripts, configurations related with OS
@@ -113,13 +113,15 @@ The TrueNAS version for which this manual was written is **25.10.4**.
 
 2. [Pools configuration (create all pools and use the "apps" pool via TrueNAS Apps)](./truenas-setup/Pools_Configuration.md)
 
-3. [UGREEN LED Controller support (adding the ability to control LED lights on the front panel of the NAS)](./ugreen-dxp4800-gt/LED_Controller_Support.md)
+3. [Datasets creation](./docs/datasets-creation.md)
 
-4. [SMB configuration (attach a network drive on Windows OS to access files from the NAS)](./truenas-setup/SMB_Configuration.md)
+4. [UGREEN LED Controller support (adding the ability to control LED lights on the front panel of the NAS)](./ugreen-dxp4800-gt/LED_Controller_Support.md)
 
-5. [Useful Apps](./truenas-setup/Useful_Apps.md)
+5. [SMB configuration (attach a network drive on Windows OS to access files from the NAS)](./truenas-setup/SMB_Configuration.md)
 
-6. [ARR Stack: General](./truenas-setup/ARR_Stack.md)
+6. [Useful Apps](./truenas-setup/Useful_Apps.md)
+
+7. [ARR Stack: General](./truenas-setup/ARR_Stack.md)
 
     6.1. [ARR Stack: qbittorrent](./truenas-setup/ARR_Stack.md)
 

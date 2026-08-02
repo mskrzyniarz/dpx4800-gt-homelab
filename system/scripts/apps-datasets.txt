@@ -1,0 +1,12 @@
+/tank/apps
+/tank/apps/compose
+/tank/apps/compose/shared
+/tank/apps/config
+/tank/apps/resources
+/tank/apps/resources/icons
+/tank/apps/resources/images
+/tank/apps/system
+/tank/apps/system/scripts
+/tank/apps/system/scripts/ugreen-led
+/tank/apps/data
+/tank/apps/backups
