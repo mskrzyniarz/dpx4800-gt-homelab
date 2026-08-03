@@ -40,8 +40,7 @@ set -o pipefail
 # CONSTANTS
 # ==============================================================================
 
-readonly SCRIPT_NAME
-SCRIPT_NAME="$(basename "$0")"
+readonly SCRIPT_NAME="$(basename "$0")"
 
 # Status labels stored in PATH_STATUS for each processed path
 readonly STATUS_CREATED="CREATED"
@@ -260,9 +259,14 @@ load_existing_pools() {
 # ==============================================================================
 
 # Normalize a raw input string:
-#   1. Trim leading and trailing whitespace (spaces and tabs)
+#   1. Trim leading and trailing whitespace (spaces, tabs, carriage returns)
 #   2. Remove every leading '/'
 #   3. Remove every trailing '/'
+#
+# Carriage returns (\r) are explicitly trimmed so that dataset files saved
+# with Windows line endings (CRLF) are handled correctly. Without this, a
+# blank CRLF line would normalize to "\r" (non-empty), fail path validation,
+# and produce a spurious "Invalid path" warning.
 #
 # Outputs the normalized string to stdout.
 # Outputs an empty string if the input collapses to nothing.
@@ -270,14 +274,18 @@ normalize_dataset_path() {
     local raw="$1"
     local trimmed="$raw"
 
-    # ---- Trim leading whitespace (spaces and tabs) --------------------------
-    while [[ "${trimmed:0:1}" == ' ' || "${trimmed:0:1}" == $'\t' ]]; do
+    # ---- Trim leading whitespace (spaces, tabs, carriage returns) -----------
+    while [[ "${trimmed:0:1}" == ' '    || \
+             "${trimmed:0:1}" == $'\t'  || \
+             "${trimmed:0:1}" == $'\r' ]]; do
         trimmed="${trimmed:1}"
     done
 
-    # ---- Trim trailing whitespace -------------------------------------------
+    # ---- Trim trailing whitespace (spaces, tabs, carriage returns) ----------
     while [[ "${#trimmed}" -gt 0 ]] && \
-          [[ "${trimmed: -1}" == ' ' || "${trimmed: -1}" == $'\t' ]]; do
+          [[ "${trimmed: -1}" == ' '    || \
+             "${trimmed: -1}" == $'\t'  || \
+             "${trimmed: -1}" == $'\r' ]]; do
         trimmed="${trimmed:0:${#trimmed}-1}"
     done
 
@@ -550,8 +558,8 @@ directory_is_empty() {
 # Ask the user interactively whether a regular directory should be converted
 # into a ZFS dataset.
 #
-# Accepts: Yes / yes / Y / y / 1  → returns 0
-#          No  / no  / N / n / 2  → returns 1
+# Displays a numbered select menu with options "Yes" and "No".
+# Returns 0 if the user selects Yes, 1 if the user selects No.
 ask_directory_conversion() {
     local dataset_name="$1"
     local fs_path="$2"
@@ -572,28 +580,29 @@ ask_directory_conversion() {
     printf "Do you want to convert this directory into a ZFS dataset using the '%s' preset?\n\n" \
         "$preset"
 
-    # Use bash 'select' to display a numbered menu. The user may type the
-    # menu number (1/2) or any of the accepted string variants; both are
-    # captured via $REPLY.
-    local choice
-    select choice in "Yes" "No"; do
-        case "$REPLY" in
-            Yes|yes|Y|y|1)
-                printf '\n'
-                return 0
+    # Use bash 'select' to display a numbered menu.
+    # $reply holds the chosen option label ("Yes" or "No").
+    local replace_dataset=0
+    local reply
+
+    select reply in "Yes" "No"; do
+        case "$reply" in
+            Yes | yes | y | Y | 1)
+                replace_dataset=1
+                break
                 ;;
-            No|no|N|n|2)
-                printf '\n'
-                return 1
+            No | no | n | N | 2)
+                replace_dataset=0
+                break
                 ;;
             *)
-                printf 'Please choose Yes or No.\n'
+                printf 'Invalid selection. Please choose 1 (Yes) or 2 (No).\n'
                 ;;
         esac
     done
 
-    # Reached only on EOF (e.g. non-interactive stdin); treat as No
-    return 1
+    printf '\n'
+    [[ "$replace_dataset" -eq 1 ]]
 }
 
 # ==============================================================================
