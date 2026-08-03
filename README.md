@@ -107,6 +107,12 @@ This guide does not cover the TrueNAS installation process. Instead, it explains
 
 The TrueNAS version for which this manual was written is **25.10.4**.
 
+<br />
+
+# TODO: Create TrueNAS Info Widget for Homepage dashboard
+
+<br />
+
 ### Steps:
 
 1. [Initial setup (set localization settings, create your own admin user)](./truenas-setup/Initial_Setup.md)
