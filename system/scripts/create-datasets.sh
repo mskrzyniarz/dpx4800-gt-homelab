@@ -62,7 +62,7 @@ readonly REQUIRED_TOOLS=("midclt" "jq" "mktemp" "mv" "find")
 # ==============================================================================
 
 DATASETS_FILE=""   # Path to the dataset list file
-PRESET="Apps"      # TrueNAS share_type preset for new datasets
+PRESET="APPS"      # TrueNAS share_type preset for new datasets
 DRY_RUN=0          # 1 = dry-run mode (no modifications)
 
 # Populated once by load_existing_pools(); never queried again.
@@ -111,7 +111,8 @@ Required:
 
 Optional:
   -p, --preset <preset>   Dataset preset applied when creating new datasets.
-                          Default: Apps
+                          Allowed: GENERIC, MULTIPROTOCOL, NFS, SMB, APPS
+                          Default: APPS (value is uppercased automatically)
   --dry-run               Show what would happen without making any changes.
   -h, --help              Display this help message and exit.
 
@@ -155,7 +156,7 @@ parse_arguments() {
                     log_error "Option '$1' requires an argument."
                     exit 1
                 fi
-                PRESET="$2"
+                PRESET="${2^^}"   # normalise to uppercase (API requirement)
                 shift 2
                 ;;
             --dry-run)
@@ -558,8 +559,11 @@ directory_is_empty() {
 # Ask the user interactively whether a regular directory should be converted
 # into a ZFS dataset.
 #
-# Displays a numbered select menu with options "Yes" and "No".
-# Returns 0 if the user selects Yes, 1 if the user selects No.
+# Displays a two-option menu with arrow-key navigation (Up/Down to move,
+# Enter to confirm). Falls back gracefully when the terminal does not
+# support ANSI escape codes.
+#
+# Returns 0 if the user selects "Yes", 1 if the user selects "No".
 ask_directory_conversion() {
     local dataset_name="$1"
     local fs_path="$2"
@@ -580,28 +584,67 @@ ask_directory_conversion() {
     printf "Do you want to convert this directory into a ZFS dataset using the '%s' preset?\n\n" \
         "$preset"
 
-    # Use bash 'select' to display a numbered menu.
-    # $reply holds the chosen option label ("Yes" or "No").
-    local replace_dataset=0
-    local reply
+    # ---- Arrow-key-aware selection ------------------------------------------
+    # Up/Down arrows move the highlighted cursor; Enter confirms the choice.
+    # Escape sequences: arrow keys send ESC [ A (up) / ESC [ B (down).
+    # The second read uses -t 0.1 so a lone ESC (e.g. user presses Escape)
+    # does not block the loop.
 
-    select reply in "Yes" "No"; do
-        case "$reply" in
-            Yes | yes | y | Y | 1)
-                replace_dataset=1
-                break
-                ;;
-            No | no | n | N | 2)
-                replace_dataset=0
-                break
-                ;;
-            *)
-                printf 'Invalid selection. Please choose 1 (Yes) or 2 (No).\n'
-                ;;
-        esac
+    local -a choices=("Yes" "No")
+    local selected=0
+    local total="${#choices[@]}"
+    local key esc i
+
+    # Hide the cursor for a cleaner appearance; restore it on exit.
+    tput civis 2>/dev/null || true
+
+    # Draw the initial menu
+    for i in "${!choices[@]}"; do
+        if [[ "$i" -eq "$selected" ]]; then
+            printf ' \033[1;32m>\033[0m %s\n' "${choices[$i]}"
+        else
+            printf '   %s\n' "${choices[$i]}"
+        fi
     done
 
+    while true; do
+        # Read a single character; treat EOF (Ctrl-D) as confirming current choice
+        IFS= read -rsn1 key || break
+
+        if [[ "$key" == $'\x1b' ]]; then
+            # Possible arrow key — read the rest of the escape sequence.
+            # -t 0.1: time out after 100 ms so a bare ESC press doesn't hang.
+            IFS= read -rsn2 -t 0.1 esc || esc=""
+            case "$esc" in
+                '[A')  # Up arrow — wrap around at the top
+                    selected=$(( (selected - 1 + total) % total ))
+                    ;;
+                '[B')  # Down arrow — wrap around at the bottom
+                    selected=$(( (selected + 1) % total ))
+                    ;;
+            esac
+        elif [[ "$key" == '' ]]; then
+            # Enter key (read -rsn1 returns empty string for Enter)
+            break
+        fi
+
+        # Move cursor up by the number of option lines, then redraw
+        printf '\033[%dA' "$total"
+        for i in "${!choices[@]}"; do
+            if [[ "$i" -eq "$selected" ]]; then
+                printf ' \033[1;32m>\033[0m %s\n' "${choices[$i]}"
+            else
+                printf '   %s\n' "${choices[$i]}"
+            fi
+        done
+    done
+
+    tput cnorm 2>/dev/null || true   # restore cursor
     printf '\n'
+
+    # Return 0 when "Yes" is selected, 1 otherwise
+    local replace_dataset=0
+    [[ "${choices[$selected]}" == "Yes" ]] && replace_dataset=1
     [[ "$replace_dataset" -eq 1 ]]
 }
 
