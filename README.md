@@ -113,21 +113,40 @@ The TrueNAS version for which this manual was written is **25.10.4**.
 
 <br />
 
-### Steps:
+### General:
 
-1. [Initial setup (set localization settings, create your own admin user)](./truenas-setup/Initial_Setup.md)
+- [Initial setup](./truenas-setup/Initial_Setup.md)  
+  set localization settings, create your own admin user
 
-2. [Pools configuration (create all pools and use the "apps" pool via TrueNAS Apps)](./truenas-setup/Pools_Configuration.md)
+- [Pools configuration](./truenas-setup/Pools_Configuration.md)  
+  create all pools and use the 'apps' pool as TrueNAS Apps pool
 
-3. [Datasets creation](./docs/datasets-creation.md)
+- [Datasets creation](./docs/datasets-creation.md)  
+  create all required datasets
 
-4. [UGREEN LED Controller support (adding the ability to control LED lights on the front panel of the NAS)](./ugreen-dxp4800-gt/LED_Controller_Support.md)
+- [UGREEN LED Controller support](./ugreen-dxp4800-gt/LED_Controller_Support.md)  
+  adding the ability to control LED lights on the front panel of the TrueNAS
 
-5. [SMB configuration (attach a network drive on Windows OS to access files from the NAS)](./truenas-setup/SMB_Configuration.md)
+- [SMB configuration](./truenas-setup/SMB_Configuration.md)  
+  attach a network drive on Windows OS to access files from the TrueNAS
 
-6. [Useful Apps](./truenas-setup/Useful_Apps.md)
+### Useful Apps
 
-7. [ARR Stack: General](./truenas-setup/ARR_Stack.md)
+- [Code Server](./truenas-setup/Useful_Apps.md)  
+  Allows to run instance of VS Code that you can access from your browser. Useful for easily editing all kinds of files.
 
-    6.1. [ARR Stack: qbittorrent](./truenas-setup/ARR_Stack.md)
+- [Code Server](./truenas-setup/Useful_Apps.md)  
+  Allows to run instance of VS Code that you can access from your browser. Useful for easily editing all kinds of files.
 
+### ARR Stack
+
+- [Overview](./truenas-setup/arr-stack-overview.md)  
+
+- [qBittorrent](./truenas-setup/Useful_Apps.md)  
+
+
+### Script documentation
+
+- [Automatic creation of TrueNAS datasets](./system/scripts/create-datasets/README.md)  
+
+- [Update TrueNAS app metadata](./system/scripts/update-truenas-app-metadata/README.md)  

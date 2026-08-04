@@ -1,0 +1,14 @@
+services:
+  code-server:
+    container_name: code-server
+    image: lscr.io/linuxserver/code-server:latest
+    ports:
+      - ${CODE_SERVER_PORT}:8443
+    volumes:
+      - /mnt/tank/apps/config/code-server:/config
+      - /mnt/tank/apps/config:/home/coder/apps-config
+    restart: unless-stopped
+    environment:
+      - PUID=${PUID}
+      - PGID=${PGID}
+      - PASSWORD=${CODE_SERVER_PASSWORD}
