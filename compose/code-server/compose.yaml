@@ -6,7 +6,7 @@ services:
       - ${CODE_SERVER_PORT}:8443
     volumes:
       - /mnt/tank/apps/config/code-server:/config
-      - /mnt/tank/apps/config:/home/coder/apps-config
+      - /mnt/tank/apps:/home/coder/apps
     restart: unless-stopped
     environment:
       - PUID=${PUID}

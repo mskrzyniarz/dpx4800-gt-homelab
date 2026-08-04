@@ -44,6 +44,10 @@ cd update-truenas-app-metadata
 ```bash
 curl -L -o yq https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64
 ```
+`yt` binary version 4.53.3 is also added to this repository.
+
+Here is the link to the file: [yt binary v4.53.3](./yq)
+
 ```bash
 chmod +x yq
 ```

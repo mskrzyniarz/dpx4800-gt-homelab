@@ -94,9 +94,14 @@ Here is a link to instructions on how to use this script:
 
 [Update TrueNAS app metadata script](../../system/scripts/update-truenas-app-metadata/README.md)
 
+Command example:
+```bash
+./update-truenas-app-metadata.sh -f /mnt/tank/apps/compose/code-server/metadata.yaml -v 4.130.0
+```
+
 <br />
 
-**To see updated data for `Code Server` on the TrueNAS `Apps` page:**
+### To see updated data for `Code Server` on the TrueNAS `Apps` page
 
 - open `Apps` TrueNAS page
 
@@ -109,7 +114,15 @@ Here is a link to instructions on how to use this script:
 
 ## Access your location directory from Code Server
 
-To access some directory from drive in Code Server:
+To access some directory from drive in Code Server you need to edit [/compose/code-server/compose.yaml](./compose.yaml).
+
+Add additional entry under `volumes:` property:
+
+```
+- /mnt/tank/apps/config:/home/coder/apps-config
+```
+
+- Save changes.
 
 - Got to TrueNAS `Apps` page.
 
@@ -117,18 +130,11 @@ To access some directory from drive in Code Server:
 
 - Press the `Edit` button.
 
-- In the section `Storage Configuration` add `Additional Storage` with settings:
-    -  `Type`: `Host Path (Path that already exists on the system)`
-    -  `Mount Path`: `/home/coder/apps-config`
-    -  `Host Path`: `/mnt/tank/configs`
+- Don't make any changes, just click the `Save` button.
 
-- Save changes.
+This setting will cause the `/mnt/tank/apps/config` directory to be displayed as follows in Code Server: 
 
-![Access directory from Code Server](../images/access-directory-from-code-server.png)
-
-This setting will cause the `/mnt/tank/configs` directory to be displayed as follows in Code Server: 
-
-![Code Server with mounted local directory](../images/code-server-with-mounted-local-directory.png)
+![Code Server with mounted local directory](./readme-files/code-server-with-mounted-local-directory.png)
 
 ## My Code Server preferences and installed extensions
 
