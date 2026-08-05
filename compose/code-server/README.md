@@ -41,6 +41,9 @@ tank/apps/configs/code-server
 **Here is the `tank/apps/compose/code-server/compose.yaml` file:**  
 [compose/code-server/compose.yaml](./compose.yaml)
 
+**Here is the `tank/apps/compose/code-server/metadata.yaml` file:**  
+[compose/code-server/metadata.yaml](./metadata.yaml)
+
 ## Installing Code Server
 
 Open TrueNAS `Apps` page.
@@ -96,7 +99,7 @@ Here is a link to instructions on how to use this script:
 
 Command example:
 ```bash
-./update-truenas-app-metadata.sh -f /mnt/tank/apps/compose/code-server/metadata.yaml -v 4.130.0
+./update-truenas-app-metadata.sh -f /mnt/tank/apps/compose/code-server/metadata.yaml -e /mnt/tank/apps/compose/shared/.env -v 4.130.0
 ```
 
 <br />
@@ -152,3 +155,8 @@ This setting will cause the `/mnt/tank/apps/config` directory to be displayed as
 - GitLens (Identifier: eamodio.gitlens)
 - shell-format (Identifier: foxundermoon.shell-format)
 - IntelliJ IDEA Keybindings (Identifier: k--kato.intellij-idea-keybindings)
+
+
+\___  <br />
+
+[← Back to the Main Menu](../../README.md)

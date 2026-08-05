@@ -13,6 +13,7 @@ It uses a local standalone [`yq`](https://github.com/mikefarah/yq) binary ([Mike
 - Source metadata is authoritative for overlapping keys
 - Preserves keys that exist only in target
 - Optional application name override
+- Optional ordered loading of multiple `.env` files for `${VAR}` interpolation
 - Optional version override for:
 	- `human_version`
 	- `metadata.app_version`
@@ -98,6 +99,12 @@ Expected local path:
 	- Required unless help is requested.
 	- Source YAML used for merge.
 
+- `-e`, `--env-files <paths>`
+	- Optional comma-separated list of `.env` files.
+	- Files are loaded from left to right.
+	- Variables from later files override variables from earlier files.
+	- Values are used to replace `${VAR}` placeholders in the source YAML before merge.
+
 - `-n`, `--name <app-name>`
 	- Optional app name override.
 	- If omitted, app name is read from `metadata.name` in source YAML.
@@ -134,6 +141,12 @@ Merge using app name from source:
 ./update-truenas-app-metadata.sh -f ./metadata.yaml
 ```
 
+Merge with multiple `.env` files (ordered override):
+
+```bash
+./update-truenas-app-metadata.sh -f ./metadata.yaml -e ./compose/shared/.env,./compose/code-server/.env
+```
+
 Merge using explicit app name:
 
 ```bash
@@ -150,6 +163,45 @@ Dry run preview:
 
 ```bash
 ./update-truenas-app-metadata.sh -f ./metadata.yaml -d
+```
+
+## Environment Variable Interpolation
+
+Before merge, the script scans source metadata for placeholders in form `${VAR}` and replaces them with values loaded from `.env` files.
+
+Rules:
+
+- If a referenced variable exists in loaded `.env` values, it is replaced.
+- If a referenced variable does not exist, the script exits with an error:
+
+```text
+In the source metadata file, the VAR variable is used but it is not defined
+```
+
+- Special variables `PUID_NAME` and `PGID_NAME` are allowed even if not present in `.env` files.
+
+Fallback logic:
+
+- `PUID_NAME`
+	- If defined in `.env`, use it.
+	- Else if `PUID` is defined and mapped, use mapped user name.
+	- Else use `unknown`.
+
+- `PGID_NAME`
+	- If defined in `.env`, use it.
+	- Else if `PGID` is defined and mapped, use mapped group name.
+	- Else use `unknown`.
+
+Built-in maps:
+
+```text
+USER_NAME[0]=root
+USER_NAME[568]=apps
+USER_NAME[950]=truenas_admin
+
+USER_GROUP_NAME[0]=root
+USER_GROUP_NAME[568]=apps
+USER_GROUP_NAME[950]=truenas_admin
 ```
 
 ## Merge Behavior

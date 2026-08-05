@@ -9,6 +9,7 @@ services:
       - /mnt/tank/apps:/home/coder/apps
     restart: unless-stopped
     environment:
+      - TZ=${TZ}
       - PUID=${PUID}
       - PGID=${PGID}
       - PASSWORD=${CODE_SERVER_PASSWORD}
