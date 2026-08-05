@@ -72,12 +72,11 @@ tank [POOL]
 |  │  ├─ images [DATASET]  # ex. background image for Homepage dashboard
 |  │  └─ ․․․  # other datasets with static files, ex. fonts, certificates, etc.
 |  |
-|  ├─ system [DATASET]  #  scripts, configurations related with OS
+|  ├─ scripts [DATASET]  #  all kind of scripts, configurations related with OS
 |  |  ├─ .gitignore [FILE]  # if required, to exclude files nad folders containing sensitive data
-|  │  ├─ scripts [DATASET]  # all kind of scripts
-|  │  │  ├─ ugreen-led [DATASET]  # all scripts required to support UGREEN LEDs on my NAS
-|  │  │  └─ ․․․  # other script files or datasets with scripts
-|  │  └─ ․․․  # other datasets related with OS, ex. services, cron, templates, etc.
+|  │  ├─ create-datasets [FOLDER]  # includes a script to automatically create TrueNAS datasets
+|  │  ├─ ugreen-led [FOLDER]  # all scripts required to support UGREEN LEDs on my NAS
+|  │  └─ ․․․  # other folders containing the script files
 |  |
 |  ├─ data [DATASET]  # app specific data
 |  │  ├─ immich [DATASET]  # immich images
@@ -132,11 +131,12 @@ The TrueNAS version for which this manual was written is **25.10.4**.
 
 ### Useful Apps
 
-- [Code Server](./truenas-setup/Useful_Apps.md)  
+- [Code Server](./compose/code-server/README.md)  
   Allows to run instance of VS Code that you can access from your browser. Useful for easily editing all kinds of files.
 
-- [Code Server](./truenas-setup/Useful_Apps.md)  
-  Allows to run instance of VS Code that you can access from your browser. Useful for easily editing all kinds of files.
+- [Dozzle](./compose/dozzle/README.md)  
+  Dozzle is a lightweight, web-based application for monitoring Docker logs in real time.
+  
 
 ### ARR Stack
 
@@ -147,6 +147,6 @@ The TrueNAS version for which this manual was written is **25.10.4**.
 
 ### Script documentation
 
-- [Automatic creation of TrueNAS datasets](./system/scripts/create-datasets/README.md)  
+- [Automatic creation of TrueNAS datasets](./scripts/create-datasets/README.md)  
 
-- [Update TrueNAS app metadata](./system/scripts/update-truenas-app-metadata/README.md)  
+- [Update TrueNAS app metadata](./scripts/update-truenas-app-metadata/README.md)  

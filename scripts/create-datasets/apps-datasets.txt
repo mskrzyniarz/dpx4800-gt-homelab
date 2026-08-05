@@ -32,8 +32,7 @@
 /tank/apps/resources/icons
 /tank/apps/resources/images
 
-/tank/apps/system/scripts/ugreen-led
-/tank/apps/system/scripts/update-truenas-app-metadata
+/tank/apps/scripts
 
 /tank/apps/data
 

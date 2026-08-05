@@ -22,7 +22,7 @@
   "title": "Dozzle"
   "train": "community"
 "notes": |
-  # Dozzle [YAML Custom App]
+  # Dozzle [YAML] [Custom App]
 
   Dozzle is a simple, lightweight log viewer for Docker containers. It allows you to view logs from all your containers in real-time, with a clean and user-friendly interface.
 
@@ -43,6 +43,5 @@
   #### Passing Host Files, Devices, or Sockets into the Container
 
   - Docker Socket (/var/run/docker.sock) - (Read Only)
-
 "portals":
   "Web UI": "http://0.0.0.0:${DOZZLE_PORT}/"

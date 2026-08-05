@@ -20,7 +20,7 @@
   "title": "Code Server"
   "train": "community"
 "notes": |
-  # Code Server [YAML Custom App]
+  # Code Server [YAML] [Custom App]
 
   Code Server is VS Code in the browser, allowing you to develop from anywhere with a full-featured code editor.
 
@@ -48,6 +48,5 @@
   ```
 
   Note that packages installed will be lost when the container is updated or re-created.
-
 "portals":
   "Web UI": "http://0.0.0.0:${CODE_SERVER_PORT}/"
