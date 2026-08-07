@@ -68,7 +68,7 @@ cd update-truenas-app-metadata
 ```
 
 ```bash
-sudo curl -o update-truenas-app-metadata.sh https://raw.githubusercontent.com/mskrzyniarz/dpx4800-gt-homelab/refs/heads/main/system/scripts/update-truenas-app-metadata.sh
+sudo curl -o update-truenas-app-metadata.sh https://raw.githubusercontent.com/mskrzyniarz/dpx4800-gt-homelab/refs/heads/main/scripts/update-truenas-app-metadata/update-truenas-app-metadata.sh
 ```
 You can also download the script file from this link: [update-truenas-app-metadata.sh](./update-truenas-app-metadata.sh)  
 

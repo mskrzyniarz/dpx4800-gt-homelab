@@ -16,9 +16,7 @@
 /tank/apps/resources
 /tank/apps/resources/icons
 /tank/apps/resources/images
-/tank/apps/system
-/tank/apps/system/scripts
-/tank/apps/system/scripts/ugreen-led
+/tank/apps/scripts
 /tank/apps/data
 /tank/apps/backups
 ```
@@ -33,7 +31,7 @@ You can create all the datasets manually or automate this process using the meth
 
 Here is the link to:
 
-[Documentation for Automatic creation of TrueNAS datasets](../system/scripts/create-datasets/README.md)
+[Documentation for Automatic creation of TrueNAS datasets](../scripts/create-datasets/README.md)
 
 
 \___  <br />

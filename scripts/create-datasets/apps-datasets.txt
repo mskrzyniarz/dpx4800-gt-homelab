@@ -34,6 +34,6 @@
 
 /tank/apps/scripts
 
-/tank/apps/data
+tank/apps/data/filebrowser-quantum
 
 /tank/apps/backups

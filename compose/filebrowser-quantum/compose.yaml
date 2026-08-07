@@ -1,0 +1,21 @@
+services:
+  filebrowser-quantum:
+    container_name: filebrowser-quantum
+    image: gtstef/filebrowser:stable
+    user: '0:0'
+    ports:
+      - '${FILEBROWSER_QUANTUM_PORT}:80'
+    volumes:
+      - '/var/cache/filebrowser:/tmp/filebrowser' # Mount cache directory
+      - '/mnt/tank/apps/data/filebrowser-quantum:/home/filebrowser/data' # filebrowser files, like filebrowser.sqlite
+      - '/mnt/tank/apps/config/filebrowser-quantum:/config' # Mount config directory
+      - '/mnt/tank/apps:/apps'
+      - '/mnt/tank/data:/media'
+    restart: unless-stopped
+    environment:
+      - TZ=${TZ}
+      - PUID=0
+      - PGID=0
+      - FILEBROWSER_CONFIG=/config/config.yaml # /mnt/tank/apps/config/filebrowser-quantum/config.yaml
+      - FILEBROWSER_ADMIN_PASSWORD=${FILEBROWSER_ADMIN_PASSWORD}
+      - FILEBROWSER_DATABASE_PATH=/home/filebrowser/data/filebrowser.sqlite  # /mnt/tank/apps/data/filebrowser-quantum/filebrowser.sqlite

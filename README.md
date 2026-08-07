@@ -131,11 +131,13 @@ The TrueNAS version for which this manual was written is **25.10.4**.
 
 ### Useful Apps
 
+- [Dozzle](./compose/dozzle/README.md)  
+  Dozzle is a lightweight, web-based application for monitoring Docker logs in real time.
+
 - [Code Server](./compose/code-server/README.md)  
   Allows to run instance of VS Code that you can access from your browser. Useful for easily editing all kinds of files.
 
-- [Dozzle](./compose/dozzle/README.md)  
-  Dozzle is a lightweight, web-based application for monitoring Docker logs in real time.
+
   
 
 ### ARR Stack
@@ -148,5 +150,7 @@ The TrueNAS version for which this manual was written is **25.10.4**.
 ### Script documentation
 
 - [Automatic creation of TrueNAS datasets](./scripts/create-datasets/README.md)  
+  A script that creates ZFS datasets from a text file using the TrueNAS middleware API (`midclt`).
 
 - [Update TrueNAS app metadata](./scripts/update-truenas-app-metadata/README.md)  
+  A script that recursively merges the source YAML application metadata with an existing TrueNAS application metadata file.

@@ -44,7 +44,7 @@ cd create-datasets
 ```
 
 ```bash
-sudo curl -o create-datasets.sh https://raw.githubusercontent.com/mskrzyniarz/dpx4800-gt-homelab/refs/heads/main/system/scripts/create-datasets/create-datasets.sh
+sudo curl -o create-datasets.sh https://raw.githubusercontent.com/mskrzyniarz/dpx4800-gt-homelab/refs/heads/main/scripts/create-datasets/create-datasets.sh
 ```
 
 You can also download the script file from this link: [create-datasets.sh](./create-datasets.sh)

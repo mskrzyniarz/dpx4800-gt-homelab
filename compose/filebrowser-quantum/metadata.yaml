@@ -1,0 +1,41 @@
+"metadata":
+  "categories":
+  - "storage"
+  "changelog_url": "https://github.com/gtsteffaniak/filebrowser/releases"
+  "description": "The best free self-hosted web-based file manager."
+  "home": "https://filebrowserquantum.com"
+  "icon": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMiAzMiI+CiAgPCEtLSBCYWNrIGZvbGRlciAob3JhbmdlLCBiYXJlbHkgaGlnaGVyIGFuZCBsZWZ0KSAtLT4KICA8cGF0aCBkPSJNNSA4aDZsMiAyaDEyYTIgMiAwIDAgMSAyIDJ2MTBhMiAyIDAgMCAxLTIgMkg3YTIgMiAwIDAgMS0yLTJWMTBhMiAyIDAgMCAxIDItMnoiIAogICAgICAgIGZpbGw9IiNGRjk4MDAiLz4KICAKICA8IS0tIEZyb250IGZvbGRlciAoYmx1ZSwgYWxtb3N0IHNhbWUgcG9zaXRpb24pIC0tPgogIDxwYXRoIGQ9Ik02IDloNmwyIDJoMTJhMiAyIDAgMCAxIDIgMnYxMGEyIDIgMCAwIDEtMiAySDhhMiAyIDAgMCAxLTItMlYxMWEyIDIgMCAwIDEgMi0yeiIgCiAgICAgICAgZmlsbD0iIzIxOTZGMyIvPgo8L3N2Zz4KCg=="
+  "keywords":
+  - "files"
+  - "browser"
+  "name": "filebrowser-quantum"
+  "run_as_context":
+    - "description": "Container [filebrowser-quantum] can run as root user and root group."
+      "gid": 0
+      "group_name": "Host group is [root]"
+      "uid": 0
+      "user_name": "Host user is [root]"
+  "sources":
+    - "https://github.com/gtsteffaniak/filebrowser"
+  "title": "FileBrowser Quantum"
+  "train": "community"
+"notes": |
+  # FileBrowser Quantum [YAML] [Custom App]
+
+  FileBrowser Quantum is the best free self-hosted web-based file manager.
+
+  ## Security
+
+  **Read the following security precautions to ensure that you wish to continue using this application.**
+
+  ---
+
+  ### Container: [filebrowser-quantum]
+
+  #### Running user/group(s)
+
+  - User: root
+  - Group: root
+  - Supplementary Groups: apps
+"portals":
+  "Web UI": "http://0.0.0.0:${FILEBROWSER_QUANTUM_PORT}/"

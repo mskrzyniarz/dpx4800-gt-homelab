@@ -34,8 +34,8 @@
 
   #### Running user/group(s)
 
-  - User: ${PUID}
-  - Group: ${PGID}
+  - User: ${PUID_NAME}
+  - Group: ${PGID_NAME}
   - Supplementary Groups: apps
 
   ---

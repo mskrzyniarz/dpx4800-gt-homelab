@@ -12,7 +12,8 @@ tank [POOL]
    ├─ compose [DATASET] # Dataset Preset: APPS
    │  ├─ code-server [DATASET] # Dataset Preset: APPS
    |  |  ├─ .env [FILE]
-   |  |  └─ compose.yaml [FILE]
+   |  |  ├─ compose.yaml [FILE]
+   |  |  └─ metadata.yaml [FILE]
    |  |
    │  └─ shared [DATASET] # Dataset Preset: APPS
    │     └─ .env [FILE]
@@ -95,7 +96,7 @@ You can also use my script, which simply requires passing the path to the metada
 
 Here is a link to instructions on how to use this script:
 
-[Update TrueNAS app metadata script](../../system/scripts/update-truenas-app-metadata/README.md)
+[Update TrueNAS app metadata script](../../scripts/update-truenas-app-metadata/README.md)
 
 Command example:
 ```bash

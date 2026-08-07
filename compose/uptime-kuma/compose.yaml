@@ -1,0 +1,15 @@
+services:
+  uptime-kuma:
+    container_name: uptime-kuma
+    image: louislam/uptime-kuma:latest
+    user: '0:0'
+    ports:
+      - ${UPTIME_KUMA_PORT}:3001
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /mnt/tank/apps/config/uptime-kuma:/app/data
+    restart: unless-stopped
+    environment:
+      - TZ=${TZ}
+      - PUID=0
+      - PGID=0

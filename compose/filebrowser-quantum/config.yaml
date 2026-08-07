@@ -1,0 +1,20 @@
+server:
+  port: 80
+  cacheDir: /tmp/filebrowser
+  sources:
+    - path: "/apps" # file system path. (Can be relative)  validate:required
+      name: "Apps" # optional, display name, default is the path
+      config:
+        defaultEnabled: true
+    - path: "/media"
+      name: "Media"
+      config:
+        defaultEnabled: true
+
+auth:
+  adminUsername: admin
+  methods:
+    password:                             #  validate:omitempty
+      enabled: true
+      minLength: 5                        # minimum pasword length required, default is 5.  validate:omitempty
+      signup: false                       # allow signups on login page if enabled -- not secure.  validate:omitempty

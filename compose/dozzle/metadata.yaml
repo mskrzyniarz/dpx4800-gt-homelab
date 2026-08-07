@@ -12,7 +12,7 @@
     - "logs"
   "name": "dozzle"
   "run_as_context":
-    - "description": "Container [code-server] can run as ${PUID_NAME} user and ${PGID_NAME} group."
+    - "description": "Container [dozzle] can run as ${PUID_NAME} user and ${PGID_NAME} group."
       "gid": ${PGID}
       "group_name": "Host group is [${PGID_NAME}]"
       "uid": ${PUID}
@@ -36,8 +36,8 @@
 
   #### Running user/group(s)
 
-  - User: ${PUID}
-  - Group: ${PGID}
+  - User: ${PUID_NAME}
+  - Group: ${PGID_NAME}
   - Supplementary Groups: apps, docker
 
   #### Passing Host Files, Devices, or Sockets into the Container
