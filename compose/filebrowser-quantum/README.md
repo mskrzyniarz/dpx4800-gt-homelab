@@ -48,6 +48,9 @@ tank/apps/data/filebrowser-quantum
 **Here is the `tank/apps/compose/filebrowser-quantum/metadata.yaml` file:**  
 [compose/filebrowser-quantum/metadata.yaml](./metadata.yaml)
 
+**Here is the `tank/apps/config/filebrowser-quantum/config.yaml` file:**  
+[config/filebrowser-quantum/config.yaml](./config.yaml)
+
 ## Initializing the configuration
 
 :exclamation: **Before starting the installation, first copy the FileBrowser Quantum configuration file:**
@@ -119,7 +122,7 @@ Here is a link to instructions on how to use this script:
 
 Command example:
 ```bash
-./update-truenas-app-metadata.sh -f /mnt/tank/apps/compose/filebrowser-quantum/metadata.yaml -e /mnt/tank/apps/compose/shared/.env -v 1.5.0
+./update-truenas-app-metadata.sh -s /mnt/tank/apps/compose/filebrowser-quantum/metadata.yaml -e /mnt/tank/apps/compose/shared/.env -v 1.5.0
 ```
 
 <br />

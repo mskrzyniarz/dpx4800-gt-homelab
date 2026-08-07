@@ -1,15 +1,28 @@
 services:
   code-server:
     container_name: code-server
-    image: lscr.io/linuxserver/code-server:latest
+    image: lscr.io/linuxserver/code-server:${CODE_SERVER_VERSION}
+    restart: unless-stopped
     ports:
       - ${CODE_SERVER_PORT}:8443
+
     volumes:
       - /mnt/tank/apps/config/code-server:/config
       - /mnt/tank/apps:/home/coder/apps
-    restart: unless-stopped
+
+      # volumes required for the update-truenas-app-metadata.sh script to run and update the metadata.yaml file for this app
+      - ${UPDATE_APP_METADATA_PATH}:/app-metadata/script
+      - /mnt/tank/apps/compose/shared:/app-metadata/shared
+      - /mnt/tank/apps/compose/code-server:/app-metadata/source
+      - /mnt/.ix-apps/app_configs/code-server:/app-metadata/target:rw
+
     environment:
       - TZ=${TZ}
       - PUID=${PUID}
       - PGID=${PGID}
       - PASSWORD=${CODE_SERVER_PASSWORD}
+
+    post_start:
+      # Automatically update the metadata.yaml file for this app when the container starts
+      - command: /app-metadata/script/update-truenas-app-metadata.sh -s /app-metadata/source/metadata.yaml -t /app-metadata/target/metadata.yaml -e /app-metadata/shared/.env,/app-metadata/source/.env
+        user: root

@@ -8,21 +8,26 @@
 #
 # How it works:
 #   1. Resolves local standalone yq executable from SCRIPT_DIR/yq.
-#   2. Determines application name from --name or source .metadata.name.
-#   3. Resolves target:
-#      /mnt/.ix-apps/app_configs/<app-name>/metadata.yaml
-#   4. Creates merged output in a temporary file using recursive merge:
+#      If missing, the script can interactively download yq to SCRIPT_DIR.
+#   2. Loads variables from optional .env files in order (later files override earlier).
+#   3. Replaces ${VAR} placeholders in the source file using loaded variables.
+#   4. Determines application name from --name or source .metadata.name.
+#   5. Resolves target file:
+#      - From --target if provided (must exist, must have .yaml or .yml extension).
+#      - Otherwise: /mnt/.ix-apps/app_configs/<app-name>/metadata.yaml
+#   6. Creates merged output in a temporary file using recursive merge:
 #      target * source
-#   5. Optionally overrides:
+#   7. Optionally overrides after merge:
 #      - .human_version
 #      - .metadata.app_version
-#   6. In normal mode, creates timestamped backup and asks for confirmation.
-#   7. Saves merged result only after explicit user confirmation.
+#   8. In normal mode, creates timestamped backup and asks for confirmation.
+#   9. Saves merged result only after explicit user confirmation.
 #
 # Dependency:
 #   This script requires Mike Farah yq (Go implementation) as a standalone
 #   binary named "yq" placed in the same directory as this script.
-#   System-installed yq is not used.
+#   System-installed yq is not used. If yq is missing, the script can download
+#   it automatically after interactive confirmation.
 #
 # Here is the link to Mike Farah yq repository:
 #   https://github.com/mikefarah/yq
@@ -36,7 +41,7 @@
 #   ./yq
 #
 # Usage:
-#   ./update-truenas-app-metadata.sh -f <source-yaml> [options]
+#   ./update-truenas-app-metadata.sh -s <source-yaml> [options]
 #
 # Arguments:
 #   -h, --help
@@ -45,7 +50,7 @@
 #   -e, --env-files <paths>
 #       Optional comma-separated list of .env files loaded in order.
 #       Later files override variables from earlier files.
-#   -f, --file <path>
+#   -s, --source <path>
 #       Source YAML metadata file used for merge. Required unless help is
 #       requested.
 #   -n, --name <app-name>
@@ -55,6 +60,11 @@
 #       Optional version override applied after merge to:
 #       - human_version
 #       - metadata.app_version
+#   -t, --target <path>
+#       Optional path to the target metadata file to overwrite.
+#       If omitted, the target is resolved as:
+#       /mnt/.ix-apps/app_configs/<app-name>/metadata.yaml
+#       If provided, the file must exist and have a .yaml or .yml extension.
 #   -d, --dry-run
 #       Execute full merge and preview flow without saving target file and
 #       without confirmation prompt.
@@ -71,6 +81,7 @@ COLOR_GREEN='\033[0;32m'
 COLOR_YELLOW='\033[0;33m'
 COLOR_CYAN='\033[0;36m'
 COLOR_RESET='\033[0m'
+YQ_DOWNLOAD_URL='https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64'
 
 # Runtime state.
 SCRIPT_DIR=''
@@ -84,6 +95,7 @@ TARGET_FILE=''
 BACKUP_FILE=''
 MERGED_TEMP_FILE=''
 SOURCE_RENDERED_FILE=''
+TARGET_ARG=''
 
 declare -a ENV_FILE_LIST=()
 declare -A ENV_VARS=()
@@ -119,6 +131,91 @@ success() {
 	printf '%b%s%b\n' "${COLOR_GREEN}" "$1" "${COLOR_RESET}"
 }
 
+select_yes_no() {
+	# Render an interactive Yes/No chooser controlled by arrow keys and Enter.
+	local selected key rest
+	selected=1 # 0 = Yes, 1 = No (default)
+
+	if [[ ! -t 0 || ! -t 1 ]]; then
+		return 1
+	fi
+
+	while true; do
+		if [[ "${selected}" -eq 0 ]]; then
+			printf '> Yes\n'
+			printf '  No\n'
+		else
+			printf '  Yes\n'
+			printf '> No\n'
+		fi
+
+		IFS= read -rsn1 key || return 1
+
+		if [[ "${key}" == $'\x1b' ]]; then
+			IFS= read -rsn2 rest || true
+			case "${rest}" in
+				'[A'|'[B')
+					if [[ "${selected}" -eq 0 ]]; then
+						selected=1
+					else
+						selected=0
+					fi
+					;;
+			esac
+		elif [[ -z "${key}" ]]; then
+			break
+		elif [[ "${key}" == 'y' || "${key}" == 'Y' ]]; then
+			selected=0
+			break
+		elif [[ "${key}" == 'n' || "${key}" == 'N' ]]; then
+			selected=1
+			break
+		fi
+
+		# Redraw both menu lines in place after handling keyboard input.
+		printf '\033[2A'
+		printf '\r\033[2K'
+		printf '\033[1B\r\033[2K'
+		printf '\033[1A\r'
+	done
+
+	if [[ "${selected}" -eq 0 ]]; then
+		return 0
+	fi
+
+	return 1
+}
+
+download_local_yq() {
+	# Download yq into script directory and make it executable.
+	command -v curl >/dev/null 2>&1 || error 'curl is required to download yq automatically.'
+
+	(
+		cd -- "${SCRIPT_DIR}" || exit 1
+		curl -L -o yq "${YQ_DOWNLOAD_URL}" || exit 1
+		chmod +x yq || exit 1
+	) || error 'Failed to download and prepare yq binary.'
+
+	success "yq downloaded successfully to ${SCRIPT_DIR}/yq"
+}
+
+offer_yq_download() {
+	# Offer interactive yq download when local binary is missing.
+	if [[ ! -t 0 || ! -t 1 ]]; then
+		error "Cannot locate yq executable. Download it from ${YQ_DOWNLOAD_URL} and place it in ${SCRIPT_DIR}/yq"
+	fi
+
+	printf '%bWARNING:%b Cannot locate yq executable.\n' "${COLOR_YELLOW}" "${COLOR_RESET}"
+	printf 'Download yq binary now?\n'
+	printf 'Downloaded yq will be saved in %s\n' "${SCRIPT_DIR}"
+
+	if select_yes_no; then
+		download_local_yq
+	else
+		error 'Cannot locate yq executable.'
+	fi
+}
+
 cleanup() {
 	# Always remove temporary files, including on interruption or script errors.
 	if [[ -n "${MERGED_TEMP_FILE}" && -f "${MERGED_TEMP_FILE}" ]]; then
@@ -133,7 +230,7 @@ cleanup() {
 print_help() {
 	cat <<'EOF'
 Usage:
-	update-truenas-app-metadata.sh -f <source-yaml> [options]
+	update-truenas-app-metadata.sh -s <source-yaml> [options]
 
 Description:
 	Recursively merges a source metadata YAML into:
@@ -142,17 +239,19 @@ Description:
 Options:
 	-h, --help              Show this help and exit.
 	-e, --env-files <paths> Comma-separated .env files. Later files override earlier ones.
-	-f, --file <path>       Source YAML file to merge (required unless --help is used).
+	-s, --source <path>     Source YAML file to merge (required unless --help is used).
 	-n, --name <app-name>   Override application name. If omitted, uses source metadata.name.
+	-t, --target <path>     Target metadata file to overwrite. Must exist and have .yaml or .yml
+	                        extension. If omitted, resolved from app name.
 	-v, --version <value>   Override merged human_version and metadata.app_version.
 	-d, --dry-run           Perform merge and preview output without saving.
 
 Examples:
-	./update-truenas-app-metadata.sh -f ./metadata.yaml
-	./update-truenas-app-metadata.sh -f ./metadata.yaml -e ./compose/shared/.env,./compose/code-server/.env
-	./update-truenas-app-metadata.sh -f ./metadata.yaml -n immich
-	./update-truenas-app-metadata.sh -f ./metadata.yaml -v v4.130.0
-	./update-truenas-app-metadata.sh -f ./metadata.yaml -d
+	./update-truenas-app-metadata.sh -s ./metadata.yaml
+	./update-truenas-app-metadata.sh -s ./metadata.yaml -e ./compose/shared/.env,./compose/code-server/.env
+	./update-truenas-app-metadata.sh -s ./metadata.yaml -n immich
+	./update-truenas-app-metadata.sh -s ./metadata.yaml -v v4.130.0
+	./update-truenas-app-metadata.sh -s ./metadata.yaml -d
 EOF
 }
 
@@ -169,14 +268,19 @@ parse_arguments() {
 				fi
 				shift 2
 				;;
-			-f|--file)
-				[[ $# -ge 2 ]] || error 'Missing value for --file.'
+			-s|--source)
+				[[ $# -ge 2 ]] || error 'Missing value for --source.'
 				SOURCE_FILE="$2"
 				shift 2
 				;;
 			-n|--name)
 				[[ $# -ge 2 ]] || error 'Missing value for --name.'
 				APP_NAME="$2"
+				shift 2
+				;;
+			-t|--target)
+				[[ $# -ge 2 ]] || error 'Missing value for --target.'
+				TARGET_ARG="$2"
 				shift 2
 				;;
 			-v|--version)
@@ -202,7 +306,7 @@ parse_arguments() {
 
 validate_arguments() {
 	# Validate user input and source file accessibility.
-	[[ -n "${SOURCE_FILE}" ]] || error 'Source file is required. Use -f or --file.'
+	[[ -n "${SOURCE_FILE}" ]] || error 'Source file is required. Use -s or --source.'
 	[[ -f "${SOURCE_FILE}" ]] || error 'Source file does not exist.'
 	[[ -r "${SOURCE_FILE}" ]] || error 'Source file is not readable.'
 }
@@ -337,6 +441,10 @@ find_yq() {
 	local local_yq
 
 	local_yq="${SCRIPT_DIR}/yq"
+	if [[ ! -f "${local_yq}" ]]; then
+		offer_yq_download
+	fi
+
 	[[ -f "${local_yq}" ]] || error 'Cannot locate yq executable.'
 	[[ -x "${local_yq}" ]] || error 'yq exists but is not executable.'
 
@@ -356,8 +464,18 @@ resolve_app_name() {
 }
 
 resolve_target_file() {
-	# Build and validate target metadata path for the selected application.
-	TARGET_FILE="/mnt/.ix-apps/app_configs/${APP_NAME}/metadata.yaml"
+	# Build target path from explicit argument or from the app name convention.
+	if [[ -n "${TARGET_ARG}" ]]; then
+		TARGET_FILE="${TARGET_ARG}"
+
+		# Validate file extension before anything else.
+		case "${TARGET_FILE}" in
+			*.yaml|*.yml) ;;
+			*) error "Target file must have a .yaml or .yml extension: ${TARGET_FILE}" ;;
+		esac
+	else
+		TARGET_FILE="/mnt/.ix-apps/app_configs/${APP_NAME}/metadata.yaml"
+	fi
 
 	[[ -f "${TARGET_FILE}" ]] || error 'Target metadata file does not exist.'
 	[[ -r "${TARGET_FILE}" ]] || error 'Target metadata file is not readable.'
@@ -435,67 +553,13 @@ print_merged_yaml() {
 
 confirm_save() {
 	# Ask for explicit confirmation using an interactive arrow-key menu.
-	local selected key rest
-	selected=1 # 0 = Yes, 1 = No (default)
-
 	if [[ ! -t 0 || ! -t 1 ]]; then
 		warn 'Interactive confirmation is unavailable. Defaulting to No.'
 		return 1
 	fi
 
 	printf '\nSave these changes?\n'
-
-	while true; do
-		if [[ "${selected}" -eq 0 ]]; then
-			printf '> Yes\n'
-			printf '  No\n'
-		else
-			printf '  Yes\n'
-			printf '> No\n'
-		fi
-
-		IFS= read -rsn1 key || return 1
-
-		if [[ "${key}" == $'\x1b' ]]; then
-			IFS= read -rsn2 rest || true
-			case "${rest}" in
-				'[A')
-					if [[ "${selected}" -eq 0 ]]; then
-						selected=1
-					else
-						selected=0
-					fi
-					;;
-				'[B')
-					if [[ "${selected}" -eq 0 ]]; then
-						selected=1
-					else
-						selected=0
-					fi
-					;;
-			esac
-		elif [[ -z "${key}" ]]; then
-			break
-		elif [[ "${key}" == 'y' || "${key}" == 'Y' ]]; then
-			selected=0
-			break
-		elif [[ "${key}" == 'n' || "${key}" == 'N' ]]; then
-			selected=1
-			break
-		fi
-
-		# Redraw both menu lines in place after handling keyboard input.
-		printf '\033[2A'
-		printf '\r\033[2K'
-		printf '\033[1B\r\033[2K'
-		printf '\033[1A\r'
-	done
-
-	if [[ "${selected}" -eq 0 ]]; then
-		return 0
-	fi
-
-	return 1
+	select_yes_no
 }
 
 save_file() {

@@ -1,4 +1,6 @@
+"human_version": "${DOZZLE_VERSION}"
 "metadata":
+  "app_version": "${DOZZLE_VERSION}"
   "categories":
     - "monitoring"
   "changelog_url": "https://github.com/amir20/dozzle/releases"

@@ -100,7 +100,7 @@ Here is a link to instructions on how to use this script:
 
 Command example:
 ```bash
-./update-truenas-app-metadata.sh -f /mnt/tank/apps/compose/code-server/metadata.yaml -e /mnt/tank/apps/compose/shared/.env -v 4.130.0
+./update-truenas-app-metadata.sh -s /mnt/tank/apps/compose/code-server/metadata.yaml -e /mnt/tank/apps/compose/shared/.env -v 4.131.0
 ```
 
 <br />

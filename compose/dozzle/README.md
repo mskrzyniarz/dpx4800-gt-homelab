@@ -58,6 +58,7 @@ In the `Custom Config` field, enter:
 include:
   - env_file:
       - /mnt/tank/apps/compose/shared/.env
+      - /mnt/tank/apps/compose/dozzle/.env
     path: /mnt/tank/apps/compose/dozzle/compose.yaml
 ```
 
@@ -95,7 +96,7 @@ Here is a link to instructions on how to use this script:
 
 Command example:
 ```bash
-./update-truenas-app-metadata.sh -f /mnt/tank/apps/compose/dozzle/metadata.yaml -e /mnt/tank/apps/compose/shared/.env -v 10.6.11
+./update-truenas-app-metadata.sh -s /mnt/tank/apps/compose/dozzle/metadata.yaml -e /mnt/tank/apps/compose/shared/.env -v 10.6.11
 ```
 
 <br />

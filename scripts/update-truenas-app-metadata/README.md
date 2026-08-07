@@ -12,7 +12,9 @@ It uses a local standalone [`yq`](https://github.com/mikefarah/yq) binary ([Mike
 - Full recursive YAML merge of complete documents (`target * source`)
 - Source metadata is authoritative for overlapping keys
 - Preserves keys that exist only in target
+- Interactive yq bootstrap when local binary is missing
 - Optional application name override
+- Optional explicit target file path override
 - Optional ordered loading of multiple `.env` files for `${VAR}` interpolation
 - Optional version override for:
 	- `human_version`
@@ -45,9 +47,9 @@ cd update-truenas-app-metadata
 ```bash
 curl -L -o yq https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64
 ```
-`yt` binary version 4.53.3 is also added to this repository.
 
-Here is the link to the file: [yt binary v4.53.3](./yq)
+If local `./yq` is missing, the script can also offer an interactive download prompt.
+Choose Yes/No with arrow keys and confirm with Enter.
 
 ```bash
 chmod +x yq
@@ -86,7 +88,7 @@ Expected local path:
 ## Usage
 
 ```bash
-./update-truenas-app-metadata.sh -f <source-yaml> [options]
+./update-truenas-app-metadata.sh -s <source-yaml> [options]
 ```
 
 ### Arguments
@@ -95,7 +97,7 @@ Expected local path:
 	- Show usage and exit with code `0`.
 	- If present, all other arguments are ignored.
 
-- `-f`, `--file <path>`
+- `-s`, `--source <path>`
 	- Required unless help is requested.
 	- Source YAML used for merge.
 
@@ -108,6 +110,11 @@ Expected local path:
 - `-n`, `--name <app-name>`
 	- Optional app name override.
 	- If omitted, app name is read from `metadata.name` in source YAML.
+
+- `-t`, `--target <path>`
+	- Optional explicit path to the target metadata file to overwrite.
+	- The file must exist and have a `.yaml` or `.yml` extension.
+	- If omitted, the target is resolved from the app name (see [Target Resolution](#target-resolution)).
 
 - `-v`, `--version <value>`
 	- Optional version value.
@@ -122,13 +129,15 @@ Expected local path:
 
 ## Target Resolution
 
-The target file is resolved as:
+If `--target` is provided, it is used directly as the target file path. The file must exist and have a `.yaml` or `.yml` extension.
+
+If `--target` is not provided, the target is resolved as:
 
 ```text
 /mnt/.ix-apps/app_configs/<app-name>/metadata.yaml
 ```
 
-`<app-name>` is chosen in this order:
+where `<app-name>` is chosen in this order:
 
 1. `--name`
 2. `metadata.name` from source YAML
@@ -138,31 +147,53 @@ The target file is resolved as:
 Merge using app name from source:
 
 ```bash
-./update-truenas-app-metadata.sh -f ./metadata.yaml
+./update-truenas-app-metadata.sh -s ./metadata.yaml
 ```
 
 Merge with multiple `.env` files (ordered override):
 
 ```bash
-./update-truenas-app-metadata.sh -f ./metadata.yaml -e ./compose/shared/.env,./compose/code-server/.env
+./update-truenas-app-metadata.sh -s ./metadata.yaml -e ./compose/shared/.env,./compose/code-server/.env
 ```
 
 Merge using explicit app name:
 
 ```bash
-./update-truenas-app-metadata.sh -f ./metadata.yaml -n immich
+./update-truenas-app-metadata.sh -s ./metadata.yaml -n immich
 ```
 
 Merge and override version:
 
 ```bash
-./update-truenas-app-metadata.sh -f ./metadata.yaml -v v4.130.0
+./update-truenas-app-metadata.sh -s ./metadata.yaml -v v4.130.0
+```
+
+Merge with an explicit target file path:
+
+```bash
+./update-truenas-app-metadata.sh -s ./metadata.yaml -t /mnt/.ix-apps/app_configs/immich/metadata.yaml
 ```
 
 Dry run preview:
 
 ```bash
-./update-truenas-app-metadata.sh -f ./metadata.yaml -d
+./update-truenas-app-metadata.sh -s ./metadata.yaml -d
+```
+
+Run without local `./yq` to trigger interactive download prompt:
+
+```bash
+./update-truenas-app-metadata.sh -s ./metadata.yaml
+```
+
+Prompt flow:
+
+```text
+WARNING: Cannot locate yq executable.
+Download yq binary now?
+Downloaded yq will be saved in /path/to/script
+> Yes
+	No
 ```
 
 ## Environment Variable Interpolation

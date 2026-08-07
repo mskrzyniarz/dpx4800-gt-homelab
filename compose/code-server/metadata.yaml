@@ -1,4 +1,6 @@
+"human_version": "${CODE_SERVER_VERSION}"
 "metadata":
+  "app_version": "${CODE_SERVER_VERSION}"
   "categories":
     - "development"
   "changelog_url": "https://github.com/coder/code-server/blob/main/CHANGELOG.md"
