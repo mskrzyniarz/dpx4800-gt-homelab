@@ -612,14 +612,14 @@ ask_directory_conversion() {
         IFS= read -rsn1 key || break
 
         if [[ "$key" == $'\x1b' ]]; then
-            # Possible arrow key — read the rest of the escape sequence.
+            # Possible arrow key - read the rest of the escape sequence.
             # -t 0.1: time out after 100 ms so a bare ESC press doesn't hang.
             IFS= read -rsn2 -t 0.1 esc || esc=""
             case "$esc" in
-                '[A')  # Up arrow — wrap around at the top
+                '[A')  # Up arrow - wrap around at the top
                     selected=$(( (selected - 1 + total) % total ))
                     ;;
-                '[B')  # Down arrow — wrap around at the bottom
+                '[B')  # Down arrow - wrap around at the bottom
                     selected=$(( (selected + 1) % total ))
                     ;;
             esac
@@ -659,7 +659,7 @@ ask_directory_conversion() {
 #   2. Create a temporary directory inside the parent mountpoint (mktemp).
 #   3. mv the target directory into the temporary directory.
 #      Because source and destination are on the same filesystem, the kernel
-#      performs an atomic rename() — no data is copied.
+#      performs an atomic rename() - no data is copied.
 #   4. Create the dataset at the original path via the middleware API.
 #   5. mv all entries from the saved copy back into the new dataset mountpoint.
 #   6. Remove the now-empty temporary directories.
@@ -790,7 +790,7 @@ process_dataset() {
     local pool="${dataset%%/*}"
 
     # ------------------------------------------------------------------
-    # Step 3: Pool existence check (cached — no API call)
+    # Step 3: Pool existence check (cached - no API call)
     # ------------------------------------------------------------------
     if [[ -z "${EXISTING_POOLS["$pool"]+_}" ]]; then
         log_warning "Pool '$pool' does not exist. Skipping '$dataset' and its children."

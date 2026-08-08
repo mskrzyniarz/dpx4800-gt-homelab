@@ -20,8 +20,19 @@
 #   7. Optionally overrides after merge:
 #      - .human_version
 #      - .metadata.app_version
-#   8. In normal mode, creates timestamped backup and asks for confirmation.
-#   9. Saves merged result only after explicit user confirmation.
+#   8. Compares merged output with the current target file:
+#      - If no changes are detected, the script exits without saving or prompting.
+#   9. Backup strategy (only when changes are detected):
+#      a. Base backup - created once, on first run, as:
+#            <target-dir>/metadata.yaml.base.bak
+#         This file is NEVER overwritten or rotated. It preserves the original
+#         state of the target file so you can always restore to the initial state.
+#      b. Timestamped backups - created before every save, named:
+#            <target-dir>/metadata.yaml.YYYYMMDD-HHMMSS.bak
+#         At most MAX_BACKUPS (default: 5) timestamped backups are kept;
+#         the oldest is removed automatically when the limit is reached.
+#  10. In normal mode, asks for confirmation before saving.
+#  11. Saves merged result only after explicit user confirmation.
 #
 # Dependency:
 #   This script requires Mike Farah yq (Go implementation) as a standalone
@@ -65,6 +76,11 @@
 #       If omitted, the target is resolved as:
 #       /mnt/.ix-apps/app_configs/<app-name>/metadata.yaml
 #       If provided, the file must exist and have a .yaml or .yml extension.
+#   -y, --yes
+#       Non-interactive mode. Automatically answer yes to all prompts.
+#       If yq is missing, it is downloaded without asking.
+#       Summary and confirmation prompt are skipped; target is overwritten
+#       immediately.
 #   -d, --dry-run
 #       Execute full merge and preview flow without saving target file and
 #       without confirmation prompt.
@@ -83,6 +99,10 @@ COLOR_CYAN='\033[0;36m'
 COLOR_RESET='\033[0m'
 YQ_DOWNLOAD_URL='https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64'
 
+# Backup configuration.
+BASE_BACKUP_FILE='metadata.yaml.base.bak'
+MAX_BACKUPS=5
+
 # Runtime state.
 SCRIPT_DIR=''
 YQ_BIN=''
@@ -91,6 +111,8 @@ ENV_FILES_ARG=''
 APP_NAME=''
 VERSION_OVERRIDE=''
 DRY_RUN=false
+AUTO_YES=false
+TARGET_CHANGED=false
 TARGET_FILE=''
 BACKUP_FILE=''
 MERGED_TEMP_FILE=''
@@ -201,6 +223,13 @@ download_local_yq() {
 
 offer_yq_download() {
 	# Offer interactive yq download when local binary is missing.
+	# In non-interactive mode (--yes), download without prompting.
+	if [[ "${AUTO_YES}" == true ]]; then
+		info 'yq not found. Downloading automatically (--yes mode).'
+		download_local_yq
+		return
+	fi
+
 	if [[ ! -t 0 || ! -t 1 ]]; then
 		error "Cannot locate yq executable. Download it from ${YQ_DOWNLOAD_URL} and place it in ${SCRIPT_DIR}/yq"
 	fi
@@ -244,6 +273,8 @@ Options:
 	-t, --target <path>     Target metadata file to overwrite. Must exist and have .yaml or .yml
 	                        extension. If omitted, resolved from app name.
 	-v, --version <value>   Override merged human_version and metadata.app_version.
+	-y, --yes               Non-interactive mode. Auto-download yq if missing, skip
+	                        summary and confirmation, overwrite target immediately.
 	-d, --dry-run           Perform merge and preview output without saving.
 
 Examples:
@@ -287,6 +318,10 @@ parse_arguments() {
 				[[ $# -ge 2 ]] || error 'Missing value for --version.'
 				VERSION_OVERRIDE="$2"
 				shift 2
+				;;
+			-y|--yes)
+				AUTO_YES=true
+				shift
 				;;
 			-d|--dry-run)
 				DRY_RUN=true
@@ -485,16 +520,51 @@ resolve_target_file() {
 	fi
 }
 
-create_backup() {
-	# Create timestamped backup of the target metadata before any write operation.
-	local timestamp
+has_target_changes() {
+	# Return 0 (true) if MERGED_TEMP_FILE differs from TARGET_FILE, 1 if identical.
+	if cmp -s -- "${MERGED_TEMP_FILE}" "${TARGET_FILE}"; then
+		return 1
+	fi
+	return 0
+}
 
+ensure_base_backup() {
+	# Create a permanent base backup of TARGET_FILE on first run if not already present.
+	# This backup is never deleted and allows restoring the original state.
+	local target_dir base_backup_path
+
+	target_dir="$(dirname -- "${TARGET_FILE}")"
+	base_backup_path="${target_dir}/${BASE_BACKUP_FILE}"
+
+	if [[ ! -f "${base_backup_path}" ]]; then
+		cp -- "${TARGET_FILE}" "${base_backup_path}" || error 'Failed to create base backup file.'
+		info "Base backup created: ${base_backup_path}"
+	fi
+}
+
+create_backup() {
+	# Create a timestamped backup of TARGET_FILE with automatic rotation.
+	# Oldest backups are removed when the count reaches MAX_BACKUPS.
+	# The base backup (BASE_BACKUP_FILE) is never counted or removed.
+	local target_dir timestamp
+	local -a existing_backups
+
+	target_dir="$(dirname -- "${TARGET_FILE}")"
 	timestamp="$(date '+%Y%m%d-%H%M%S')"
 	BACKUP_FILE="${TARGET_FILE}.${timestamp}.bak"
 
-	if [[ -e "${BACKUP_FILE}" ]]; then
-		error 'Backup file already exists for the current timestamp. Please retry.'
-	fi
+	# Collect existing timestamped backups sorted oldest first.
+	mapfile -t existing_backups < <(
+		find "${target_dir}" -maxdepth 1 \
+			-name "$(basename "${TARGET_FILE}").[0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]-[0-9][0-9][0-9][0-9][0-9][0-9].bak" \
+			| sort
+	)
+
+	# Remove oldest backups until the count is strictly below MAX_BACKUPS.
+	while (( ${#existing_backups[@]} >= MAX_BACKUPS )); do
+		rm -f -- "${existing_backups[0]}" || error "Failed to remove old backup: ${existing_backups[0]}"
+		existing_backups=("${existing_backups[@]:1}")
+	done
 
 	cp -- "${TARGET_FILE}" "${BACKUP_FILE}" || error 'Failed to create backup file.'
 }
@@ -537,6 +607,8 @@ print_summary() {
 	printf '%-12s %s\n\n' 'Target      :' "${TARGET_FILE}"
 	if [[ "${DRY_RUN}" == true ]]; then
 		printf '%-12s %s\n\n' 'Backup      :' 'N/A (dry run)'
+	elif [[ "${TARGET_CHANGED}" == false ]]; then
+		printf '%-12s %s\n\n' 'Backup      :' 'N/A (no changes)'
 	else
 		printf '%-12s %s\n\n' 'Backup      :' "${BACKUP_FILE}"
 	fi
@@ -591,21 +663,38 @@ main() {
 	merge_metadata
 	override_version
 
-	if [[ "${DRY_RUN}" == false ]]; then
-		create_backup
+	# Detect whether the merged result actually differs from the current target.
+	if has_target_changes; then
+		TARGET_CHANGED=true
 	fi
 
-	print_summary
-	print_merged_yaml
+	if [[ "${DRY_RUN}" == false ]]; then
+		ensure_base_backup
+		if [[ "${TARGET_CHANGED}" == true ]]; then
+			create_backup
+		fi
+	fi
+
+	if [[ "${AUTO_YES}" == false || "${DRY_RUN}" == true ]]; then
+		print_summary
+		print_merged_yaml
+	fi
 
 	if [[ "${DRY_RUN}" == true ]]; then
 		success 'Dry run complete. No files were modified.'
 		exit 0
 	fi
 
-	if ! confirm_save; then
-		warn 'Operation cancelled.'
+	if [[ "${TARGET_CHANGED}" == false ]]; then
+		info 'No changes detected. Nothing to update.'
 		exit 0
+	fi
+
+	if [[ "${AUTO_YES}" == false ]]; then
+		if ! confirm_save; then
+			warn 'Operation cancelled.'
+			exit 0
+		fi
 	fi
 
 	save_file

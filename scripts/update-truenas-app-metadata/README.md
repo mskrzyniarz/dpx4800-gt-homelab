@@ -13,6 +13,7 @@ It uses a local standalone [`yq`](https://github.com/mikefarah/yq) binary ([Mike
 - Source metadata is authoritative for overlapping keys
 - Preserves keys that exist only in target
 - Interactive yq bootstrap when local binary is missing
+- Optional non-interactive mode (`--yes`) for automated runs
 - Optional application name override
 - Optional explicit target file path override
 - Optional ordered loading of multiple `.env` files for `${VAR}` interpolation
@@ -20,7 +21,9 @@ It uses a local standalone [`yq`](https://github.com/mikefarah/yq) binary ([Mike
 	- `human_version`
 	- `metadata.app_version`
 - Dry run mode with full merged YAML preview
-- Timestamped backup before write operations
+- Change detection - skips save when merged result is identical to target
+- Permanent base backup of the original file (created once, never overwritten)
+- Automatic timestamped backup rotation (up to 5 backups kept)
 - Explicit confirmation before save
 - Colored, readable terminal output
 - Temporary file workflow with automatic cleanup via `trap`
@@ -52,7 +55,7 @@ If local `./yq` is missing, the script can also offer an interactive download pr
 Choose Yes/No with arrow keys and confirm with Enter.
 
 ```bash
-chmod +x yq
+chmod 755 yq
 ```
 
 Expected local path:
@@ -76,7 +79,7 @@ You can also download the script file from this link: [update-truenas-app-metada
 
 Make it executable
 ```bash
-chmod +x update-truenas-app-metadata.sh
+chmod 755 update-truenas-app-metadata.sh
 ```
 
 Expected local path:
@@ -121,6 +124,13 @@ Expected local path:
 	- Applied after merge to:
 		- `human_version`
 		- `metadata.app_version`
+
+- `-y`, `--yes`
+	- Non-interactive mode.
+	- Automatically answers yes to all prompts.
+	- If local `yq` is missing, it is downloaded automatically.
+	- In normal mode, skips summary and confirmation prompt and overwrites target immediately.
+	- In `--dry-run` mode, no file is written.
 
 - `-d`, `--dry-run`
 	- Perform full processing and preview.
@@ -172,6 +182,12 @@ Merge with an explicit target file path:
 
 ```bash
 ./update-truenas-app-metadata.sh -s ./metadata.yaml -t /mnt/.ix-apps/app_configs/immich/metadata.yaml
+```
+
+Run in non-interactive mode:
+
+```bash
+./update-truenas-app-metadata.sh -s ./metadata.yaml -y
 ```
 
 Dry run preview:
@@ -253,7 +269,22 @@ The merge is applied to the entire document, not selected fields.
 
 ## Backup Behavior
 
-In normal mode, before any write operation, the script creates:
+Backups are created in the same directory as the target file, only when actual changes are detected.
+If the merged result is identical to the current target, the script exits without saving or creating any backup.
+
+### Base backup
+
+On the first run that produces changes, the script creates a permanent base backup of the original file:
+
+```text
+metadata.yaml.base.bak
+```
+
+This file is **never overwritten or rotated**. It always reflects the original state of `metadata.yaml` before any script modification, so you can restore to the initial state at any time.
+
+### Timestamped backups
+
+Before every save, the script creates a timestamped backup:
 
 ```text
 metadata.yaml.YYYYMMDD-HHMMSS.bak
@@ -265,7 +296,8 @@ Example:
 metadata.yaml.20260804-223501.bak
 ```
 
-Backups are never overwritten.
+At most **5** timestamped backups are kept. When the limit is reached, the oldest one is automatically removed before the new backup is created.
+The base backup (`metadata.yaml.base.bak`) is never counted towards this limit.
 
 ## Dry Run Mode
 

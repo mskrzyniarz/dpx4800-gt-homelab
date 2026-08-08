@@ -1,0 +1,45 @@
+[Unit]
+Description=Update TrueNAS App Metadata Service Daemon
+
+# Docker must be available before starting this daemon.
+Requires=docker.service
+After=docker.service
+
+# Stop this daemon when docker.service is stopped.
+PartOf=docker.service
+
+
+[Service]
+Type=simple
+
+WorkingDirectory=/mnt/tank/apps/scripts/update-truenas-app-metadata
+
+ExecStart=/mnt/tank/apps/scripts/update-truenas-app-metadata/update-truenas-app-metadata-daemon.sh
+
+# Always restart the daemon when the process exits.
+Restart=always
+RestartSec=5
+
+User=root
+Group=root
+
+Environment="PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+
+# Allow enough time for graceful shutdown.
+TimeoutStopSec=30
+
+# Send SIGTERM on stop.
+KillSignal=SIGTERM
+
+# Keep child processes in the same cgroup.
+KillMode=control-group
+
+# Do not allow privilege escalation.
+NoNewPrivileges=true
+
+# If OOM kills the process, mark unit stopped and allow restart policy.
+OOMPolicy=stop
+
+
+[Install]
+WantedBy=multi-user.target

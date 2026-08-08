@@ -52,7 +52,7 @@ You can also download the script file from this link: [create-datasets.sh](./cre
 Make it executable:
 
 ```bash
-chmod +x create-datasets.sh
+chmod 755 create-datasets.sh
 ```
 
 Expected local path:

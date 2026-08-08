@@ -5,24 +5,10 @@ services:
     restart: unless-stopped
     ports:
       - "${DOZZLE_PORT}:8080"
-
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - /mnt/tank/apps/config/dozzle:/data
-
-      # volumes required for the update-truenas-app-metadata.sh script to run and update the metadata.yaml file for this app
-      - ${UPDATE_APP_METADATA_PATH}:/app-metadata/script
-      - /mnt/tank/apps/compose/shared:/app-metadata/shared
-      - /mnt/tank/apps/compose/dozzle:/app-metadata/source
-      - /mnt/.ix-apps/app_configs/dozzle:/app-metadata/target:rw
-  
     environment:
       - TZ=${TZ}
       - PUID=${PUID}
       - PGID=${PGID}
-
-    post_start:
-      # Automatically update the metadata.yaml file for this app when the container starts
-      - command: /app-metadata/script/update-truenas-app-metadata.sh -s /app-metadata/source/metadata.yaml -t /app-metadata/target/metadata.yaml -e /app-metadata/shared/.env,/app-metadata/source/.env
-        user: root
-  
